@@ -1,4 +1,4 @@
-package cn.chutian;
+package info.victorchu;
 
 /**
  * Hello world!

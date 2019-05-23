@@ -1,11 +1,11 @@
-package cn.chutian.jregex.parser;
+package info.victorchu.jregex.parser;
 
 /**
  * @Author victor
  * @Email victorchu0610@outlook.com
  * @Data 2019/5/5
  * @Version 1.0
- * @Description TODO
+ * @Description
  */
 public class RegexParser {
 }

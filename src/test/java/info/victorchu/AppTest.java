@@ -1,4 +1,4 @@
-package cn.chutian;
+package info.victorchu;
 
 import static org.junit.Assert.assertTrue;
 
