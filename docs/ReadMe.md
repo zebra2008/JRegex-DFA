@@ -1,5 +1,7 @@
 # JRegex-DFA
 
+java-written regex engine use DFA to match.
+
 ## EBNF
 
 
@@ -37,3 +39,4 @@ simpleexp	    =	( unionexp )	(precedence override)
 charexp	        =	<Unicode character>	(a single non-reserved character)	
                 |	\ <Unicode character> 	(a single character)
 ``` 
+java-written regex engine use DFA to match.
