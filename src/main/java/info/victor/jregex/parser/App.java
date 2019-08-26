@@ -1,6 +1,6 @@
-package cn.chutian.regex;
+package info.victor.jregex.parser;
 
-import cn.chutian.regex.grammar.RegexNode;
+import info.victor.jregex.grammar.RegexNode;
 
 public class App {
     public static void main(String[] args) {

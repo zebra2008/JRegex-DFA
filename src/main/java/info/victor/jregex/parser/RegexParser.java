@@ -1,10 +1,8 @@
-package cn.chutian.regex;
+package info.victor.jregex.parser;
 
 import cn.chutian.regex.grammar.*;
-import cn.chutian.regex.grammar.charclass.AnyCharNotNewLine;
-import cn.chutian.regex.grammar.CharRangeRegexNode;
-import cn.chutian.regex.grammar.CharRegexNode;
-import cn.chutian.regex.grammar.ComplementRegexNode;
+import info.victor.jregex.grammar.*;
+import info.victor.jregex.grammar.charclass.AnyCharNotNewLine;
 
 public class RegexParser {
     /**

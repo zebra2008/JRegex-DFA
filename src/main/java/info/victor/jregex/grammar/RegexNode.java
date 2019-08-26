@@ -1,4 +1,4 @@
-package cn.chutian.regex.grammar;
+package info.victor.jregex.grammar;
 
 public abstract class RegexNode {
 }

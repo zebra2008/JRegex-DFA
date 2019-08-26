@@ -1,4 +1,4 @@
-package cn.chutian.regex;
+package info.victor.jregex.parser;
 
 public class Pattern {
 
