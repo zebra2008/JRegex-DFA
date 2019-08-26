@@ -1,6 +1,5 @@
 package info.victor.jregex.parser;
 
-import cn.chutian.regex.grammar.*;
 import info.victor.jregex.grammar.*;
 import info.victor.jregex.grammar.charclass.AnyCharNotNewLine;
 
