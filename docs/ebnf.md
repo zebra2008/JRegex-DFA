@@ -24,8 +24,8 @@ basic   = atom
         | ( RE )
         ;
         
-atom  = characterclass
-      | specialcharacter {\w,[[]]}
+atom  = commoncharacterclass
+      | specialcharacterclass {\w,[:alnum:]}
       ;
 
 
