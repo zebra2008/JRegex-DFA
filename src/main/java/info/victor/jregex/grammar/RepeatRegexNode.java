@@ -13,10 +13,12 @@ public class RepeatRegexNode extends RegexNode{
     private int min;
     private int max;
     private RegexNode inner;
+    private boolean greedy;
 
-    public RepeatRegexNode(int min, int max, RegexNode inner) {
+    public RepeatRegexNode(int min, int max, RegexNode inner,boolean greedy) {
         this.min = min;
         this.max = max;
         this.inner = inner;
+        this.greedy = true;
     }
 }

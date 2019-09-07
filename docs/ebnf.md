@@ -1,11 +1,8 @@
 # ebnf
 
 ```ebnf
-RE      = union
-        | union | RE
-        ;
 union   = concat
-        | concat union
+        | concat | union
         ;
 concat  = repeat
         | repeat concatexp
@@ -21,11 +18,11 @@ repeat  = basic ? (zero or one occurrence)
         | basic
         ;
 basic   = atom
-        | ( RE )
+        | ( union )
         ;
         
-atom  = commoncharacterclass
-      | specialcharacterclass {\w,[:alnum:]}
+atom  = characterclass
+      | specialcharacterclass {.,\w,[:alnum:]}
       ;
 
 

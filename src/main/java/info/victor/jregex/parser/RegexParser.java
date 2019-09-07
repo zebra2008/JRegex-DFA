@@ -44,10 +44,11 @@ public class RegexParser {
      * 构造 “重复” 语法节点
      * @param exp
      * @param min 至少 min 次重复
+     * @param greedy 是否贪婪
      * @return
      */
-    static RegexNode onRepeatMinly(RegexNode exp,int min){
-        return new RepeatRegexNode(min,-1,exp);
+    static RegexNode onRepeatMinly(RegexNode exp,int min,boolean greedy){
+        return new RepeatRegexNode(min,-1,exp,greedy);
     }
 
     /**
@@ -55,10 +56,11 @@ public class RegexParser {
      * @param exp
      * @param min 至少 min 次重复
      * @param max 至多 max 次重复
+     * @param greedy 是否贪婪
      * @return
      */
-    static RegexNode onRepeat(RegexNode exp,int min,int max) {
-        return new RepeatRegexNode(min,max,exp);
+    static RegexNode onRepeat(RegexNode exp,int min,int max,boolean greedy) {
+        return new RepeatRegexNode(min,max,exp,greedy);
     }
 
     /**
@@ -100,7 +102,7 @@ public class RegexParser {
     // ++++++++++++++++++++++++++++ parser functions ++++++++++++++++++++++++
 
     /**
-     * 处理语法:分支
+     * 语法产生式 union
      * @return
      */
     final RegexNode parseUnionExp() {
@@ -108,12 +110,11 @@ public class RegexParser {
         if (more() && match('|')){
             node = onUnion(node,parseUnionExp());
         }
-
         return node;
     }
 
     /**
-     * 处理语法: 连接
+     * 语法产生式 concat
      * @return
      */
     final RegexNode parseConcatExp() {
@@ -125,25 +126,39 @@ public class RegexParser {
     }
 
     /**
-     * 处理语法: 重复
+     * 语法产生式 repeat
      * @return
      */
     final RegexNode parseRepeatExp() {
-        RegexNode node = parseCharClassExp();
+        RegexNode node = parseBasicExp();
         while (peek("?*+{")) {
-            if (match('?'))
-                node = onRepeat(node,0,1);
-            else if (match('*'))
-                node = onRepeatMinly(node,0);
-            else if (match('+'))
-                node = onRepeatMinly(node, 1);
+            if (match('?')) {
+                node = onRepeat(node, 0, 1, true);
+            }
+            else if (match('*')) {
+                if(match('?')){
+                    next(); // skip '?'
+                    node = onRepeatMinly(node, 0,false);
+                }else {
+                    node = onRepeatMinly(node, 0,true);
+                }
+            }
+            else if (match('+')) {
+                if(match('?')) {
+                    next(); // skip '?'
+                    node = onRepeatMinly(node, 1,false);
+                }else {
+                    node = onRepeatMinly(node, 1,false);
+                }
+            }
             else if (match('{')) {
                 int start = position;
                 while (peek("0123456789")) {
                     next();
                 }
-                if (start == position)
+                if (start == position) {
                     throw new IllegalArgumentException("integer expected at position " + position);
+                }
                 int min = Integer.parseInt(regex.substring(start, position));
                 int max = -1;
                 if (match(',')) {
@@ -159,10 +174,10 @@ public class RegexParser {
                 if (!match('}'))
                     throw new IllegalArgumentException("expected '}' at position " + position);
                 if (max == -1) {
-                    node = onRepeatMinly(node, min);
+                    node = onRepeatMinly(node, min,true);
                 }
                 else {
-                    node = onRepeat(node, min, max);
+                    node = onRepeat(node, min, max,true);
                 }
             }
         }
@@ -170,31 +185,11 @@ public class RegexParser {
     }
 
     /**
-     * 处理语法: 字符
+     * 语法产生式 basic，表示组或字符
      * @return
      */
-    final RegexNode parseCharClassExp(){
-        if (match('[')) {
-            boolean negate = false;
-            if (match('^')) {
-                negate = true;
-            }
-            RegexNode e = parseCharClasses();
-            if (negate) {
-                e =onComplement(e);
-            }
-            if (!match(']')) {
-                throw new IllegalArgumentException("expected ']' at position " + position);
-            }
-            return e;
-        } else
-            return parseSimpleExp();
-    }
-
-    final RegexNode parseSimpleExp() throws IllegalArgumentException {
-        if (match('.')){
-            return onAnyCharNotNewLine();
-        } else if (match('(')) {
+    final RegexNode parseBasicExp(){
+        if(match('(')){
             if (match(')')) {
                 throw new IllegalArgumentException("expected regex expression before ')' at position " + position);
             }
@@ -202,7 +197,40 @@ public class RegexParser {
             if (!match(')'))
                 throw new IllegalArgumentException("expected ')' at position " + position);
             return e;
-        }else
+        }else {
+            return parseAtomExp();
+        }
+    }
+    /**
+     * 语法产生式 atom, 代表一个字符的所有可能描述
+     * @return
+     */
+    final RegexNode parseAtomExp(){
+        if (match('.')) {
+            return onAnyCharNotNewLine();
+        }
+        return parseCharClassesExp();
+    }
+
+    /**
+     * 处理语法: 字符类
+     * @return
+     */
+    final RegexNode parseCharClassesExp() {
+        if (match('[')) {
+            boolean negate = false;
+            if (match('^')) {
+                negate = true;
+            }
+            RegexNode e = parseCharacterClasses();
+            if (negate) {
+                e = onComplement(e);
+            }
+            if (!match(']')) {
+                throw new IllegalArgumentException("expected ']' at position " + position);
+            }
+            return e;
+        } else
             return onChar(parseCharExp());
     }
 
@@ -210,19 +238,19 @@ public class RegexParser {
      * 处理语法: 字符类
      * @return
      */
-    final RegexNode parseCharClasses() {
-        RegexNode e = parseCharClass();
+    final RegexNode parseCharacterClasses() {
+        RegexNode e = parseCharaterRange();
         while (more() && !peek("]")) {
-            e = onUnion(e, parseCharClass());
+            e = onUnion(e, parseCharacterClasses());
         }
         return e;
     }
 
     /**
-     * 处理字符类内部语法
+     * 处理字符类语法
      * @return
      */
-    final RegexNode parseCharClass() {
+    final RegexNode parseCharaterRange() {
         char c = parseCharExp();
         if (match('-')) {
             if (peek("]")) {
@@ -263,6 +291,38 @@ public class RegexParser {
     }
 
     /**
+     * whether next chars match string in string array，if no element matched ,return null.
+     * @param strs
+     * @return
+     */
+    private String matches(String... strs){
+        if(more()) {
+            loop1:
+            for (String str : strs) {
+                if(str == null || "".equals(str)){
+                    throw new IllegalArgumentException("strs must not contains empty string!");
+                }
+                boolean flag = true;
+                loop2:
+                for (int i=0;i<str.length();i++){
+                    if(str.charAt(i) != regex.charAt(position+i)){
+                        flag = false;
+                        break loop2;
+                    }
+                }
+                if(flag){
+                    position = position + str.length();
+                    return str;
+                }
+            }
+            return null;
+
+        }else {
+            return null;
+        }
+    }
+
+    /**
      * 仍有未处理的字符
      * @return
      */
@@ -271,7 +331,7 @@ public class RegexParser {
     }
 
     /**
-     * 判断此时的字符是否在情况中，指针不变
+     * 判断此时的字符是否在参数中，指针不变
      * @param s
      * @return
      */
