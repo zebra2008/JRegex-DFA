@@ -2,6 +2,8 @@ package info.victor.jregex.parser;
 
 import info.victor.jregex.grammar.*;
 import info.victor.jregex.grammar.charclass.AnyCharNotNewLine;
+import info.victor.jregex.grammar.charclass.CharRangeRegexNode;
+import info.victor.jregex.grammar.charclass.CharRegexNode;
 
 public class RegexParser {
     /**
@@ -97,6 +99,9 @@ public class RegexParser {
      */
     static RegexNode onAnyCharNotNewLine() {
         return new AnyCharNotNewLine();
+    }
+    static RegexNode onCharClasses(RegexNode... regexNodes) {
+        return new CharClassesRegexNode(regexNodes);
     }
 
     // ++++++++++++++++++++++++++++ parser functions ++++++++++++++++++++++++
@@ -205,18 +210,7 @@ public class RegexParser {
      * 语法产生式 atom, 代表一个字符的所有可能描述
      * @return
      */
-    final RegexNode parseAtomExp(){
-        if (match('.')) {
-            return onAnyCharNotNewLine();
-        }
-        return parseCharClassesExp();
-    }
-
-    /**
-     * 处理语法: 字符类
-     * @return
-     */
-    final RegexNode parseCharClassesExp() {
+    final RegexNode parseAtomExp() {
         if (match('[')) {
             boolean negate = false;
             if (match('^')) {
@@ -231,7 +225,7 @@ public class RegexParser {
             }
             return e;
         } else
-            return onChar(parseCharExp());
+            return parseCharExp();
     }
 
     /**
@@ -241,7 +235,7 @@ public class RegexParser {
     final RegexNode parseCharacterClasses() {
         RegexNode e = parseCharaterRange();
         while (more() && !peek("]")) {
-            e = onUnion(e, parseCharacterClasses());
+            e = onCharClasses(e, parseCharacterClasses());
         }
         return e;
     }
@@ -251,17 +245,17 @@ public class RegexParser {
      * @return
      */
     final RegexNode parseCharaterRange() {
-        char c = parseCharExp();
+        RegexNode c = parseCharExp();
         if (match('-')) {
             if (peek("]")) {
-                return onUnion(onChar(c), onChar('-'));
+                return onCharClasses(c, onChar('-'));
             }
             else {
-                return onCharRange(c, parseCharExp());
+                return onCharRange(((CharRegexNode)c).getCharacter(), ((CharRegexNode)parseCharExp()).getCharacter());
             }
         }
         else {
-            return onChar(c);
+            return c;
         }
     }
 
@@ -269,9 +263,14 @@ public class RegexParser {
      * 处理 普通字符，和转义字符
      * @return
      */
-    final char parseCharExp() {
+    final RegexNode parseCharExp() {
+        ////todo 此处可以添加更多特殊字符处理
+        if (match('.')) {
+            return onAnyCharNotNewLine();
+        }
+        // 转义字符或是普通字符
         match('\\');
-        return next();
+        return onChar(next());
     }
 
     // +++++++++++++++++++++++++++ char reader function ++++++++++++++++++++++++++++

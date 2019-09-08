@@ -1,6 +1,8 @@
-package info.victor.jregex.grammar;
+package info.victor.jregex.grammar.charclass;
 
-public class CharRangeRegexNode extends RegexNode {
+import info.victor.jregex.grammar.CharClassRegexNode;
+
+public class CharRangeRegexNode extends CharClassRegexNode {
     private Character from;
     private Character to;
 
